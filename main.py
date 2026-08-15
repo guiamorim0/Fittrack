@@ -59,3 +59,37 @@ def remover_usuario(usuario_id: int, db: Session = Depends(get_db)):
     db.delete(db_usuario)
     db.commit()
     return {"mensagem": "Usuario removido com sucesso!"}
+
+
+@app.post(
+    '/usuarios/{usuario_id}/perfil',
+    response_model= schemas.PerfilResponse)
+def criar_perfil(usuario_id: int, perfil: schemas.PerfilCreate, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado!")
+
+    if usuario.perfil:
+        raise HTTPException(status_code=400, detail="Usuario ja possui perfil!")
+
+    db_perfil = models.PerfilFitness(
+        usuario_id=usuario_id,
+        peso=perfil.peso,
+        altura=perfil.altura,
+        objetivo=perfil.objetivo
+    )
+    db.add(db_perfil)
+    db.commit()
+    db.refresh(db_perfil)
+    return db_perfil
+
+@app.get(
+    '/usuarios/{usuario_id}/perfil',
+    response_model= schemas.PerfilResponse)
+def buscar_perfil(usuario_id: int, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado!")
+    if not usuario.perfil:
+        raise HTTPException(status_code=404, detail="Perfil nao encontrado!")
+    return usuario.perfil
