@@ -4,6 +4,7 @@ from typing import List
 import models
 import schemas
 from database import engine, session_local
+from datetime import datetime
 
 models.base.metadata.create_all(bind=engine)
 
@@ -93,3 +94,40 @@ def buscar_perfil(usuario_id: int, db: Session = Depends(get_db)):
     if not usuario.perfil:
         raise HTTPException(status_code=404, detail="Perfil nao encontrado!")
     return usuario.perfil
+
+@app.post(
+    '/usuarios/{usuario_id}/treinos',
+    response_model= schemas.TreinoResponse)
+def criar_treino(usuario_id: int, treino: schemas.TreinoCreate, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado!")
+
+    db_treino = models.Treino(
+        usuario_id=usuario_id,
+        nome=treino.nome,
+        data=datetime.now()
+    )
+    db.add(db_treino)
+    db.commit()
+    db.refresh(db_treino)
+    return db_treino
+
+@app.get(
+    '/treinos/{treino_id}',
+    response_model= schemas.TreinoResponse)
+def ler_treino(treino_id: int, db: Session = Depends(get_db)):
+    treino = db.query(models.Treino).filter(models.Treino.id == treino_id).first()
+    if not treino:
+        raise HTTPException(status_code=404, detail="Treino nao encontrado!")
+    return treino
+
+@app.delete(
+    '/treinos/{treino_id}')
+def remover_treino(treino_id: int, db: Session = Depends(get_db)):
+    treino = db.query(models.Treino).filter(models.Treino.id == treino_id).first()
+    if not treino:
+        raise HTTPException(status_code=404, detail="Treino nao encontrado!")
+    db.delete(treino)
+    db.commit()
+    return {"mensagem": "Treino removido com sucesso!"}
