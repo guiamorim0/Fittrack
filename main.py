@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 import models
 import schemas
@@ -170,3 +170,22 @@ def remover_exercicio(exercicio_id: int, db: Session = Depends(get_db)):
     db.delete(exercicio)
     db.commit()
     return {"mensagem": "Exercicio removido com sucesso!"}
+
+@app.get(
+    '/treinos/{treino_id}/completo',
+    response_model= schemas.TreinoComExercicios)
+def treino_completo(treino_id: int, db: Session = Depends(get_db)):
+    treino = db.query(models.Treino).options(joinedload(models.Treino.exercicios)).filter(models.Treino.id == treino_id).first()
+    if not treino:
+        raise HTTPException(status_code=404, detail="Treino nao encontrado!")
+    return treino
+
+@app.get(
+    '/usuarios/{usuario_id}/treinos',
+    response_model= schemas.UsuarioComTreinos)
+def usuario_com_treinos(usuario_id: int, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).options(joinedload(models.Usuario.treinos)).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado!")
+    return usuario
+

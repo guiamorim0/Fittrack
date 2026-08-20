@@ -57,3 +57,9 @@ class ExercicioResponse(ExercicioBase):
     treino_id: int
     class Config:
         from_attributes = True
+
+class TreinoComExercicios(TreinoResponse):
+    exercicios: list[ExercicioResponse] = []
+
+class UsuarioComTreinos(UsuarioResponse):
+    treinos: list[TreinoResponse] = []
