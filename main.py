@@ -131,3 +131,42 @@ def remover_treino(treino_id: int, db: Session = Depends(get_db)):
     db.delete(treino)
     db.commit()
     return {"mensagem": "Treino removido com sucesso!"}
+
+@app.post(
+    '/treinos/{treino_id}/exercicios',
+    response_model= schemas.ExercicioResponse)
+def criar_exercicio(treino_id: int, exercicio: schemas.ExercicioCreate, db: Session = Depends(get_db)):
+    treino = db.query(models.Treino).filter(models.Treino.id == treino_id).first()
+    if not treino:
+        raise HTTPException(status_code=404, detail="Treino nao encontrado!")
+
+    db_exercicio = models.Exercicio(
+        treino_id = treino_id,
+        nome=exercicio.nome,
+        series=exercicio.series,
+        repeticoes=exercicio.repeticoes,
+        carga_kg=exercicio.carga_kg
+    )
+    db.add(db_exercicio)
+    db.commit()
+    db.refresh(db_exercicio)
+    return db_exercicio
+
+@app.get(
+    '/treinos/{treino_id}/exercicios',
+    response_model= List[schemas.ExercicioResponse])
+def listar_exercicios(treino_id: int, db: Session = Depends(get_db)):
+    treino = db.query(models.Treino).filter(models.Treino.id == treino_id).first()
+    if not treino:
+        raise HTTPException(status_code=404, detail="Treino nao encontrado!")
+    return treino.exercicios
+
+@app.delete(
+    '/exercicios/{exercicio_id}')
+def remover_exercicio(exercicio_id: int, db: Session = Depends(get_db)):
+    exercicio = db.query(models.Exercicio).filter(models.Exercicio.id == exercicio_id).first()
+    if not exercicio:
+        raise HTTPException(status_code=404, detail="Exercicio nao encontrado!")
+    db.delete(exercicio)
+    db.commit()
+    return {"mensagem": "Exercicio removido com sucesso!"}
