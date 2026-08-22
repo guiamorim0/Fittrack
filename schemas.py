@@ -63,3 +63,7 @@ class TreinoComExercicios(TreinoResponse):
 
 class UsuarioComTreinos(UsuarioResponse):
     treinos: list[TreinoResponse] = []
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

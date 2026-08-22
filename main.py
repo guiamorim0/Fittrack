@@ -5,7 +5,8 @@ import models
 import schemas
 from database import engine, session_local
 from datetime import datetime
-from seguranca import gerar_hash
+from seguranca import gerar_hash, verificar_senha, criar_token
+
 
 models.base.metadata.create_all(bind=engine)
 
@@ -17,6 +18,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@app.post(
+    '/auth/login',
+    response_model= schemas.Token)
+def login(email: str, senha: str, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.email == email).first()
+    if not usuario or not verificar_senha(senha, usuario.senha_hash):
+        raise HTTPException(status_code=401, detail="Email ou senha incorretos!")
+
+    token = criar_token({"sub": str(usuario.id)})
+
+    return {"access_token": token, "token_type": "bearer"}  
 
 @app.post(
     '/usuarios/',
@@ -189,4 +202,3 @@ def usuario_com_treinos(usuario_id: int, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado!")
     return usuario
-
