@@ -5,6 +5,7 @@ import models
 import schemas
 from database import engine, session_local
 from datetime import datetime
+from seguranca import gerar_hash
 
 models.base.metadata.create_all(bind=engine)
 
@@ -28,7 +29,7 @@ def criar_usuario(usuario: schemas.UsuarioCreate ,db: Session = Depends(get_db))
     db_usuario = models.Usuario(
         nome=usuario.nome,
         email=usuario.email,
-        senha_hash=usuario.senha
+        senha_hash=gerar_hash(usuario.senha) #pega a senha que o cliente mandou e transforma no hash
     )
     db.add(db_usuario)
     db.commit()
